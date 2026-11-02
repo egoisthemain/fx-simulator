@@ -24,3 +24,41 @@ jobs:
 
       - name: Benchmark
         run: ./build/simulation_benchmark
+
+  documentation:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen
+
+      - name: Generate documentation
+        run: doxygen Doxyfile
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload documentation
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs/html
+
+      - name: Publish documentation
+        id: deployment
+        uses: actions/deploy-pages@v4
